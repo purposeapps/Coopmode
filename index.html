@@ -1,35 +1,299 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#203b2b"><title>CoopMode — Missões da Família</title>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#203b2b">
+<title>Missões da Família</title>
 <style>
-:root{font-family:system-ui,-apple-system,sans-serif;color:#203b2b;background:#f3f6f1}*{box-sizing:border-box}body{margin:0}header{background:#203b2b;color:white;padding:22px 16px}header .wrap{max-width:850px;margin:auto}h1{margin:0;font-size:1.7rem}header p{margin:5px 0 0;color:#d6e5d5}main{max-width:850px;margin:20px auto;padding:0 14px 50px}.card{background:white;border:1px solid #dbe4d9;border-radius:15px;padding:18px;margin:14px 0;box-shadow:0 2px 8px #203b2b0b}h2{font-size:1.13rem;margin:0 0 12px}.balance{font-size:2.5rem;font-weight:800;margin:6px 0}.muted{color:#617164;font-size:.9rem}.tabs{display:flex;flex-wrap:wrap;gap:8px}.tabs button{background:#e3ece1;color:#203b2b}.tabs button.active{background:#203b2b;color:white}button{border:0;border-radius:10px;padding:11px 14px;background:#326849;color:white;font-weight:650;cursor:pointer}button.secondary{background:#e4ebe1;color:#203b2b}button.danger{background:#a13939}button:disabled{opacity:.5}input,select,textarea{font:inherit;width:100%;padding:11px;border:1px solid #b9c9ba;border-radius:9px;background:white}label{display:block;margin:12px 0 5px;font-weight:600}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.item{padding:12px 0;border-bottom:1px solid #e5ebe4}.item:last-child{border:0}.pill{display:inline-block;background:#e4efe5;padding:4px 9px;border-radius:100px;font-size:.82rem}.hidden{display:none}.good{color:#237344}.bad{color:#a13939}small{font-size:.8rem}#status{font-size:.86rem;color:#526c56;margin:12px 0}textarea{min-height:65px}button:focus-visible,input:focus-visible{outline:3px solid #83b994}
-</style></head><body><header><div class="wrap"><h1>✦ Missões da Família</h1><p>Uma equipe, muitas conquistas. · CoopMode</p></div></header><main>
-<div class="tabs"><button data-tab="painel" class="active">🏡 Painel</button><button data-tab="missoes">🧭 Missões</button><button data-tab="historico">📜 Histórico</button><button data-tab="premios">🎁 Prêmios</button><button data-tab="dados">⚙️ Dados</button></div>
-<p id="status" role="status"></p>
-<section id="painel"><div class="card"><div class="muted">SALDO COMPARTILHADO DA SEMANA</div><div class="balance" id="saldo">0 pontos</div><div class="muted" id="semana"></div></div><div class="card"><h2>🎁 Próxima recompensa</h2><p>1 hora de eletrônico compartilhada</p><p class="muted">Saldo zero ou positivo no fechamento da semana.</p><button id="fechar">Encerrar semana</button></div><div class="card"><h2>Últimas missões</h2><div id="recentes"></div></div></section>
-<section id="missoes" class="hidden"><div class="card"><h2>🧭 Registrar uma missão</h2><p class="muted">Somente o adulto lança pontos. O saldo pertence à equipe dos irmãos.</p><label for="modelo">Missão</label><select id="modelo"></select><label for="descricao">Descrição</label><input id="descricao" maxlength="160" placeholder="O que aconteceu?"><label for="pontos">Pontos (negativos para desconto)</label><input id="pontos" type="number" step="1" required><button id="registrar" style="margin-top:14px">Registrar missão</button></div><div class="card"><h2>Missões sugeridas</h2><div id="sugestoes"></div></div></section>
-<section id="historico" class="hidden"><div class="card"><h2>📜 Histórico de pontos</h2><div id="historicoLista"></div></div><div class="card"><h2>Semanas encerradas</h2><div id="semanasLista"></div></div></section>
-<section id="premios" class="hidden"><div class="card"><h2>🎁 Prêmios acumulados</h2><p class="muted">As recompensas não resgatadas continuam acumuladas.</p><div id="premiosLista"></div></div></section>
-<section id="dados" class="hidden"><div class="card"><h2>Proteja os dados</h2><p>Os dados ficam armazenados neste navegador e neste aparelho. O GitHub Pages não sincroniza automaticamente entre aparelhos. Não use navegação privada nem limpe os dados do site.</p><p><strong>Faça backup regularmente:</strong> exporte o arquivo e guarde-o em local seguro. Você pode importá-lo depois, inclusive em outro aparelho.</p><div class="row"><button id="exportar">⬇️ Exportar backup</button><button class="secondary" id="importarBotao">⬆️ Importar backup</button></div><input type="file" id="importar" accept=".json,application/json" class="hidden"><p class="muted" id="armazenamento"></p></div></section>
-</main><script>
-(()=>{'use strict';
-const KEY='coopmode_familia_v3';const $=id=>document.getElementById(id);
-const modelos=[['Escolha uma missão',0],['Combinar o pijama',10],['Levar o lixo',10],['Cumprimentar vizinhos no elevador',10],['Briga entre irmãos',-300],['Outra missão',0]];
-function novo(){return {version:3,entries:[],weeks:[],rewards:[],createdAt:new Date().toISOString()}}
-function valid(x){return x&&typeof x==='object'&&Array.isArray(x.entries)&&Array.isArray(x.weeks)&&Array.isArray(x.rewards)}
-let data;try{const raw=localStorage.getItem(KEY);data=raw?JSON.parse(raw):novo();if(!valid(data))throw Error('Formato inválido')}catch(e){data=novo();alert('Não foi possível ler os dados anteriores deste navegador. Se tiver backup, importe-o em Dados.')} 
-function save(){try{localStorage.setItem(KEY,JSON.stringify(data));$('status').textContent='✓ Dados salvos neste navegador · '+new Date().toLocaleTimeString('pt-BR');$('armazenamento').textContent='Armazenamento local ativo neste navegador.';return true}catch(e){$('status').textContent='⚠️ Não foi possível salvar. Exporte um backup agora.';alert('Erro ao salvar dados no navegador. Verifique o armazenamento.');return false}}
-function date(x){return new Date(x).toLocaleString('pt-BR')}
-function saldo(){return data.entries.filter(e=>!e.weekId).reduce((s,e)=>s+Number(e.points),0)}
-function item(e){const d=document.createElement('div');d.className='item';const strong=document.createElement('strong');strong.textContent=e.description;const p=document.createElement('div');p.className=Number(e.points)>=0?'good':'bad';p.textContent=(e.points>0?'+':'')+e.points+' pontos';const small=document.createElement('small');small.className='muted';small.textContent=date(e.at);d.append(strong,p,small);return d}
-function fill(id,arr,fn,empty){const el=$(id);el.replaceChildren();if(!arr.length){el.textContent=empty;el.className='muted';return}el.className='';arr.forEach(x=>el.append(fn(x)))}
-function render(){const n=saldo();$('saldo').textContent=n+' pontos';$('saldo').className='balance '+(n<0?'bad':'good');$('semana').textContent='Semana atual · pontos dos dois irmãos juntos';fill('recentes',data.entries.filter(e=>!e.weekId).slice(-5).reverse(),item,'Nenhuma missão registrada nesta semana.');fill('historicoLista',[...data.entries].reverse(),item,'Nenhum registro ainda.');fill('semanasLista',[...data.weeks].reverse(),w=>{const d=document.createElement('div');d.className='item';d.textContent=date(w.closedAt)+' · '+w.balance+' pontos · '+(w.earned?'Recompensa conquistada':'Sem recompensa');return d},'Nenhuma semana encerrada.');fill('premiosLista',data.rewards,r=>{const d=document.createElement('div');d.className='item';const t=document.createElement('div');t.textContent='🎮 '+r.name+' · conquistado em '+date(r.earnedAt);const b=document.createElement('button');b.className=r.claimedAt?'secondary':'secondary';b.textContent=r.claimedAt?'✓ Resgatado · desfazer':'Marcar como resgatado';b.style.marginTop='8px';b.onclick=()=>{const old=r.claimedAt;r.claimedAt=old?null:new Date().toISOString();if(!save())r.claimedAt=old;render()};d.append(t,b);return d},'Ainda não há recompensas acumuladas.');}
-$('modelo').replaceChildren();modelos.forEach(([name,p],i)=>{const o=document.createElement('option');o.value=i;o.textContent=name;$('modelo').append(o)});
-$('modelo').onchange=()=>{const [name,p]=modelos[+$('modelo').value];$('descricao').value=+$('modelo').value===0||name==='Outra missão'?'':name;$('pontos').value=p};
-fill('sugestoes',modelos.slice(1),m=>{const d=document.createElement('div');d.className='item';d.textContent=m[0]+' · '+(m[1]>0?'+':'')+m[1]+' pontos';return d},'');
-$('registrar').onclick=()=>{const description=$('descricao').value.trim(),points=Number($('pontos').value);if(!description||!$('pontos').value||!Number.isInteger(points)){alert('Preencha a descrição e um número inteiro de pontos.');return}const e={id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),description,points,at:new Date().toISOString(),weekId:null};data.entries.push(e);if(!save()){data.entries.pop();return}$('descricao').value='';$('pontos').value='';$('modelo').value='0';render();alert('Missão registrada!')};
-$('fechar').onclick=()=>{const n=saldo();if(!confirm('Encerrar a semana com saldo de '+n+' pontos? Esta ação arquiva os pontos da semana.'))return;const id='week-'+Date.now(),at=new Date().toISOString(),earned=n>=0;data.entries.filter(e=>!e.weekId).forEach(e=>e.weekId=id);data.weeks.push({id,closedAt:at,balance:n,earned});if(earned)data.rewards.push({id:'reward-'+Date.now(),name:'1 hora de eletrônico compartilhada',earnedAt:at,claimedAt:null,weekId:id});if(!save()){data.entries.filter(e=>e.weekId===id).forEach(e=>e.weekId=null);data.weeks.pop();if(earned)data.rewards.pop();return}render();alert(earned?'Semana encerrada! Uma recompensa foi acumulada.':'Semana encerrada. Sem recompensa nesta semana.')};
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('main section').forEach(s=>s.classList.toggle('hidden',s.id!==b.dataset.tab));render()});
-$('exportar').onclick=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='CoopMode-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000)};
-$('importarBotao').onclick=()=>$('importar').click();$('importar').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const x=JSON.parse(await f.text());if(!valid(x))throw Error('Arquivo inválido');if(!confirm('Substituir TODOS os dados atuais pelos dados do backup?'))return;const old=data;data=x;if(!save()){data=old;return}render();alert('Backup restaurado com sucesso!')}catch(err){alert('Não foi possível importar este arquivo de backup.')}finally{e.target.value=''}};
-save();render();
-})();</script></body></html>
+:root{--forest:#203b2b;--forest2:#31543b;--moss:#52734c;--cream:#f7f2df;--paper:#fffdf5;--gold:#e8bd58;--ink:#26342a;--muted:#697568;--red:#a7443b;--line:#dedcc9;--blue:#426b83}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#e8efdf,#f7f2df 260px);color:var(--ink);font-family:ui-rounded,"Trebuchet MS",system-ui,sans-serif}
+header{background:var(--forest);color:white;padding:22px 16px 20px;border-bottom:6px solid var(--gold)}
+.wrap{max-width:1050px;margin:auto}header .top{display:flex;align-items:center;gap:12px}.pixel{width:48px;height:48px;display:grid;place-items:center;background:var(--gold);color:var(--forest);border:4px solid #f5d984;box-shadow:inset -5px -5px #b88b35;font-size:25px}
+h1{font-size:clamp(1.35rem,4vw,2rem);margin:0}header p{margin:7px 0 0;color:#d8e6d5;font-size:.95rem}
+main{max-width:1050px;margin:18px auto;padding:0 14px 40px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}.tab{border:2px solid var(--forest);border-radius:10px;padding:10px 14px;font-weight:800;background:var(--paper);color:var(--forest);cursor:pointer}.tab.active{background:var(--forest);color:white}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}.card{background:var(--paper);border:2px solid var(--line);border-radius:15px;padding:16px;box-shadow:0 4px 0 rgba(32,59,43,.07);min-width:0}.span-12{grid-column:span 12}.span-8{grid-column:span 8}.span-6{grid-column:span 6}.span-4{grid-column:span 4}
+.card h2{font-size:1.12rem;margin:0 0 12px;color:var(--forest)}.card h3{font-size:1rem;margin:0 0 8px}.muted{color:var(--muted);font-size:.9rem}.balance{background:var(--forest);color:white;border:3px solid var(--gold);padding:20px;border-radius:15px}.balance .label{font-size:.88rem;color:#d8e6d5}.points{font-size:2.6rem;line-height:1.15;font-weight:900;margin:6px 0}.balance small{color:#d8e6d5}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#f1f0df;border-radius:10px;padding:12px}.stat strong{display:block;font-size:1.35rem;color:var(--forest)}.stat span{font-size:.8rem;color:var(--muted)}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.btn{border:0;border-radius:9px;padding:10px 13px;background:var(--forest);color:white;font-weight:800}.btn:hover{filter:brightness(1.12)}.btn.secondary{background:#e7eadb;color:var(--forest);border:1px solid #c7d0be}.btn.gold{background:var(--gold);color:#332b17}.btn.danger{background:var(--red)}.btn.small{padding:7px 9px;font-size:.85rem}.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;min-width:0}.field label{font-size:.86rem;font-weight:800;color:var(--forest)}input,select,textarea{width:100%;border:1px solid #c9cebd;border-radius:8px;padding:10px;background:white;color:var(--ink)}input[type=checkbox]{width:auto}.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.formgrid .full{grid-column:1/-1}
+.task-list{display:flex;flex-direction:column;gap:9px}.task{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:11px;background:white}.task .emoji{font-size:1.5rem;width:34px;text-align:center}.task-main{flex:1;min-width:0}.task-main strong{display:block;overflow-wrap:anywhere}.task-main small{color:var(--muted)}.points-pill{white-space:nowrap;font-weight:900;border-radius:8px;padding:5px 8px;background:#e4efdc;color:#31543b}.points-pill.negative{background:#f7e4df;color:var(--red)}.task-actions{display:flex;gap:6px;flex-wrap:wrap}
+.category{border-left:5px solid var(--moss)}.category.maintenance{border-left-color:var(--gold)}.category.negative{border-left-color:var(--red)}
+.notice{padding:12px;border-radius:10px;background:#f3eed7;border:1px solid #e2d39a;font-size:.9rem}.empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px}
+.history-item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}.history-item:last-child{border-bottom:0}.history-item .ico{font-size:1.2rem}.history-item .desc{flex:1;min-width:0}.history-item strong{display:block}.history-item small{color:var(--muted)}.history-points{font-weight:900;white-space:nowrap}
+.reward{display:flex;align-items:center;gap:12px;background:#f8f0d6;padding:14px;border-radius:12px;border:1px solid #e6d39c}.reward .chest{font-size:2rem}.reward-info{flex:1}.reward-info strong{display:block}.count{font-size:1.4rem;font-weight:900;color:var(--forest)}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}.hidden{display:none!important}.footer{font-size:.8rem;color:var(--muted);text-align:center;padding:18px 8px}.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--forest);color:white;padding:12px 18px;border-radius:10px;box-shadow:0 5px 20px #0003;z-index:10;max-width:90vw}
+dialog{border:2px solid var(--forest);border-radius:15px;max-width:480px;width:calc(100% - 28px);padding:20px;background:var(--paper);color:var(--ink)}dialog::backdrop{background:#14271dcc}dialog h2{margin-top:0}.section-title{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+@media(max-width:700px){.span-8,.span-6,.span-4{grid-column:span 12}.stats{grid-template-columns:1fr 1fr 1fr}.stat{padding:9px}.stat strong{font-size:1.1rem}.task{align-items:flex-start;flex-wrap:wrap}.task-main{flex:1 1 calc(70% - 50px)}.task-actions{width:100%;padding-left:46px}.formgrid{grid-template-columns:1fr}.formgrid .full{grid-column:auto}.points{font-size:2.2rem}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="top"><div class="pixel" aria-hidden="true">✦</div><div><h1>Missões da Família</h1><p>Uma equipe, muitas conquistas.</p></div></div>
+</div></header>
+<main>
+  <nav class="tabs" aria-label="Navegação principal">
+    <button class="tab active" data-tab="painel">🏡 Painel</button>
+    <button class="tab" data-tab="tarefas">🧭 Tarefas e categorias</button>
+    <button class="tab" data-tab="historico">📜 Histórico</button>
+    <button class="tab" data-tab="premios">🎁 Prêmios acumulados</button>
+  </nav>
+
+  <section id="tab-painel" class="tabpage">
+    <div class="grid">
+      <div class="span-8">
+        <div class="balance">
+          <div class="label">SALDO COMPARTILHADO DA SEMANA</div>
+          <div class="points" id="balance">0 pontos</div>
+          <small id="week-label">Semana atual</small>
+        </div>
+      </div>
+      <div class="span-4 card">
+        <h2>🎁 Próxima recompensa</h2>
+        <p style="margin:0 0 8px"><strong>1 hora de eletrônico compartilhada</strong></p>
+        <p class="muted" id="reward-status">Saldo zero ou positivo no fechamento da semana.</p>
+        <button class="btn gold" style="width:100%" id="close-week">Encerrar semana</button>
+      </div>
+      <div class="span-12 card">
+        <div class="section-title"><h2 style="margin:0">🧭 Registrar uma missão</h2><span class="muted">Somente o adulto lança pontos</span></div>
+        <div class="notice">Quando um dos irmãos realiza uma tarefa, os pontos entram no saldo compartilhado dos dois. Registre cada realização apenas uma vez.</div>
+        <div style="height:12px"></div>
+        <div class="notice" id="storage-status" role="status">Verificando armazenamento local…</div>
+        <div style="height:10px"></div>
+        <button class="btn secondary small" id="backup-now" type="button">💾 Baixar backup dos dados</button>
+        <div class="field"><label for="task-filter">Filtrar por categoria</label><select id="task-filter"><option value="all">Todas as categorias</option></select></div>
+        <div id="quick-tasks" class="task-list"></div>
+      </div>
+      <div class="span-6 card">
+        <h2>📊 Resumo desta semana</h2>
+        <div class="stats">
+          <div class="stat"><strong id="earned">0</strong><span>Pontos ganhos</span></div>
+          <div class="stat"><strong id="lost">0</strong><span>Pontos perdidos</span></div>
+          <div class="stat"><strong id="entries">0</strong><span>Lançamentos</span></div>
+        </div>
+      </div>
+      <div class="span-6 card">
+        <h2>🧰 Ações rápidas</h2>
+        <p class="muted">Use o cadastro para incluir penalidades como “Briga entre irmãos” com −300 pontos, ou qualquer outra ocorrência.</p>
+        <button class="btn secondary" id="go-tasks">Gerenciar tarefas e categorias</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-tarefas" class="tabpage hidden">
+    <div class="grid">
+      <div class="span-6 card">
+        <h2>🏷️ Categorias</h2>
+        <p class="muted">Crie categorias independentes para incentivo intenso, manutenção ou outras necessidades da família.</p>
+        <form id="category-form">
+          <input type="hidden" id="category-id">
+          <div class="field"><label for="category-name">Nome da categoria</label><input id="category-name" required maxlength="50" placeholder="Ex.: Em desenvolvimento"></div>
+          <div class="field"><label for="category-color">Tipo visual</label><select id="category-color"><option value="intense">Incentivo intenso</option><option value="maintenance">Manutenção</option><option value="other">Outra</option></select></div>
+          <div class="row"><button class="btn" type="submit" id="save-category">Salvar categoria</button><button class="btn secondary hidden" type="button" id="cancel-category">Cancelar edição</button></div>
+        </form>
+        <hr><div id="category-list" class="task-list"></div>
+      </div>
+      <div class="span-6 card">
+        <h2>➕ Cadastrar uma tarefa ou penalidade</h2>
+        <form id="task-form">
+          <input type="hidden" id="task-id">
+          <div class="field"><label for="task-name">Nome</label><input id="task-name" required maxlength="90" placeholder="Ex.: Colocar o pijama em conjunto"></div>
+          <div class="formgrid">
+            <div class="field"><label for="task-points">Pontos</label><input id="task-points" type="number" required step="1" value="10"></div>
+            <div class="field"><label for="task-emoji">Ícone (emoji)</label><input id="task-emoji" maxlength="8" value="⭐" placeholder="⭐"></div>
+            <div class="field full"><label for="task-category">Categoria</label><select id="task-category" required></select></div>
+          </div>
+          <div class="field"><label><input type="checkbox" id="task-active" checked> Tarefa disponível para lançamento</label></div>
+          <div class="row"><button class="btn" type="submit" id="save-task">Salvar tarefa</button><button class="btn secondary hidden" type="button" id="cancel-task">Cancelar edição</button></div>
+        </form>
+        <p class="muted">Use pontos negativos para penalidades. Exemplo: “Briga entre irmãos” = −300. O lançamento é sempre manual pelo adulto.</p>
+      </div>
+      <div class="span-12 card">
+        <div class="section-title"><h2 style="margin:0">📋 Todas as tarefas</h2><span class="muted">Edite ou desative quando quiser</span></div>
+        <div id="all-tasks" class="task-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-historico" class="tabpage hidden">
+    <div class="card">
+      <div class="section-title"><h2 style="margin:0">📜 Histórico de lançamentos</h2><button class="btn secondary small" id="export-data">Exportar backup (JSON)</button></div>
+      <p class="muted">O histórico registra ganhos, penalidades e fechamentos semanais. O backup permite guardar uma cópia dos dados deste navegador.</p>
+      <div id="history-list"></div>
+    </div>
+  </section>
+
+  <section id="tab-premios" class="tabpage hidden">
+    <div class="grid">
+      <div class="span-12 card">
+        <h2>🎁 Prêmios conquistados e acumulados</h2>
+        <p class="muted">Prêmios não resgatados continuam aqui mesmo depois que o saldo semanal é zerado.</p>
+        <div id="reward-list"></div>
+      </div>
+      <div class="span-12 card">
+        <h2>➕ Registrar outro prêmio</h2>
+        <form id="reward-form">
+          <div class="formgrid">
+            <div class="field"><label for="reward-name">Nome do prêmio</label><input id="reward-name" required maxlength="100" placeholder="Ex.: 1 hora de Terraria compartilhada"></div>
+            <div class="field"><label for="reward-quantity">Quantidade</label><input id="reward-quantity" type="number" min="1" step="1" value="1" required></div>
+          </div>
+          <button class="btn" type="submit">Adicionar prêmio acumulado</button>
+        </form>
+      </div>
+      <div class="span-12 card">
+        <h2>⚙️ Dados deste app</h2>
+        <p class="muted">Os dados são guardados neste navegador, neste aparelho e neste endereço do site. Não há sincronização entre dispositivos. Baixe backups regularmente, especialmente antes de limpar o Safari ou mudar o endereço do aplicativo.</p>
+        <div class="row"><button class="btn secondary" id="import-button">Importar backup JSON</button><input id="import-file" type="file" accept="application/json,.json" class="hidden"></div>
+      </div>
+    </div>
+  </section>
+  <p class="footer">CoopMode · Armazenamento local com backup manual · Sem sincronização entre aparelhos.</p>
+</main>
+<dialog id="confirm-dialog">
+  <h2 id="dialog-title">Confirmar ação</h2><p id="dialog-message"></p>
+  <div class="row" style="justify-content:flex-end"><button class="btn secondary" id="dialog-cancel">Cancelar</button><button class="btn" id="dialog-ok">Confirmar</button></div>
+</dialog>
+<div id="toast" class="toast hidden" role="status"></div>
+<script>
+(() => {
+const KEY='missoesFamiliaV1';
+const defaultState=()=>({
+  categories:[
+    {id:'intense',name:'Em desenvolvimento',type:'intense'},
+    {id:'maintenance',name:'Manutenção',type:'maintenance'}
+  ],
+  tasks:[
+    {id:'pijama',name:'Colocar o pijama em conjunto',points:10,emoji:'🛌',categoryId:'maintenance',active:true},
+    {id:'lixo',name:'Levar o lixo',points:10,emoji:'🗑️',categoryId:'maintenance',active:true},
+    {id:'vizinhos',name:'Cumprimentar os vizinhos no elevador',points:10,emoji:'👋',categoryId:'maintenance',active:true},
+    {id:'briga',name:'Briga entre irmãos',points:-300,emoji:'⚡',categoryId:'intense',active:true}
+  ],
+  balance:0,weekStart:weekStartISO(new Date()),weekNumber:1,earned:0,lost:0,
+  history:[],rewards:[],closedWeeks:0
+});
+function weekStartISO(d){const x=new Date(d);x.setHours(12,0,0,0);const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);return x.toISOString().slice(0,10)}
+function uid(){return 'id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)}
+let storageError='';
+ function load(){
+  try{
+   const raw=localStorage.getItem(KEY);
+   if(!raw)return defaultState();
+   const s=JSON.parse(raw);
+   if(!s || !Array.isArray(s.history) || !Array.isArray(s.tasks) || !Array.isArray(s.rewards) || !Array.isArray(s.categories)) throw Error('Dados salvos inválidos');
+   return {...defaultState(),...s};
+  }catch(e){storageError='Não foi possível ler os dados anteriores: '+e.message;return defaultState()}
+ }
+let state=load(), pendingAction=null, toastTimer;
+const $=id=>document.getElementById(id);
+function save(){
+  try{
+   localStorage.setItem(KEY,JSON.stringify(state));
+   const check=localStorage.getItem(KEY);
+   if(check!==JSON.stringify(state))throw Error('Falha na verificação de gravação');
+   storageError='';
+  }catch(e){storageError='ATENÇÃO: os dados não foram gravados neste navegador. Baixe um backup agora. '+e.message;}
+  render();
+  if(storageError)toast('⚠️ Falha ao salvar! Faça backup dos dados.');
+ }
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function fmtDate(iso){try{return new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})}catch{return iso}}
+function cat(id){return state.categories.find(c=>c.id===id)}
+function signed(n){return (n>0?'+':'')+n}
+function toast(msg){$('toast').textContent=msg;$('toast').classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),2600)}
+function showTab(name){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));document.querySelectorAll('.tabpage').forEach(s=>s.classList.toggle('hidden',s.id!=='tab-'+name))}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+$('go-tasks').addEventListener('click',()=>showTab('tarefas'));
+function addHistory(kind,title,points,note=''){
+ state.history.unshift({id:uid(),kind,title,points,note,date:new Date().toISOString(),weekStart:state.weekStart});
+}
+function logTask(task){
+ if(!task||!task.active)return;
+ const n=Number(task.points);
+ state.balance+=n;
+ if(n>=0)state.earned+=n;else state.lost+=Math.abs(n);
+ addHistory(n>=0?'gain':'loss',task.name,n,cat(task.categoryId)?.name||'Sem categoria');
+ save();toast(`${task.name}: ${signed(n)} pontos`);
+}
+function renderFilter(){
+ const sel=$('task-filter'),old=sel.value;
+ sel.innerHTML='<option value="all">Todas as categorias</option>'+state.categories.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+ if([...sel.options].some(o=>o.value===old))sel.value=old;
+}
+function taskHTML(t,mode){
+ const c=cat(t.categoryId),negative=Number(t.points)<0;
+ return `<div class="task ${negative?'category negative':c?.type==='maintenance'?'category maintenance':'category'}">
+ <div class="emoji">${esc(t.emoji||'⭐')}</div><div class="task-main"><strong>${esc(t.name)}</strong><small>${esc(c?.name||'Sem categoria')}${t.active?'':' · Inativa'}</small></div>
+ <span class="points-pill ${negative?'negative':''}">${signed(Number(t.points))} pts</span>
+ <div class="task-actions">${mode==='quick'?`<button class="btn small" data-action="launch" data-id="${esc(t.id)}" ${!t.active?'disabled':''}>Lançar</button>`:`<button class="btn secondary small" data-action="edit-task" data-id="${esc(t.id)}">Editar</button><button class="btn secondary small" data-action="toggle-task" data-id="${esc(t.id)}">${t.active?'Desativar':'Ativar'}</button><button class="btn danger small" data-action="delete-task" data-id="${esc(t.id)}">Excluir</button>`}</div></div>`;
+}
+function render(){
+  $('storage-status').textContent=storageError?'⚠️ '+storageError:'✅ Armazenamento local acessível. Atenção: os dados podem ser apagados pelo Safari. Faça backups periódicos; não há sincronização.';
+ $('balance').textContent=`${state.balance>0?'+':''}${state.balance} ${Math.abs(state.balance)===1?'ponto':'pontos'}`;
+ $('week-label').textContent=`Semana iniciada em ${fmtDate(state.weekStart)} · ciclo ${state.weekNumber}`;
+ $('reward-status').textContent=state.balance>=0?'Saldo atual elegível: ao encerrar a semana, a recompensa será acumulada.':'Saldo negativo: é necessário chegar a zero ou mais para ganhar a recompensa.';
+ $('earned').textContent=state.earned;$('lost').textContent=state.lost;$('entries').textContent=state.history.filter(h=>h.weekStart===state.weekStart&&['gain','loss'].includes(h.kind)).length;
+ renderFilter();
+ const filter=$('task-filter').value;
+ const quick=state.tasks.filter(t=>t.active&&(filter==='all'||t.categoryId===filter));
+ $('quick-tasks').innerHTML=quick.length?quick.map(t=>taskHTML(t,'quick')).join(''):'<div class="empty">Nenhuma tarefa ativa nesta categoria. Cadastre ou ative tarefas na aba de administração.</div>';
+ $('category-list').innerHTML=state.categories.length?state.categories.map(c=>`<div class="task"><div class="task-main"><strong>${esc(c.name)}</strong><small>${c.type==='intense'?'Incentivo intenso':c.type==='maintenance'?'Manutenção':'Outra categoria'}</small></div><div class="task-actions"><button class="btn secondary small" data-action="edit-category" data-id="${esc(c.id)}">Editar</button><button class="btn danger small" data-action="delete-category" data-id="${esc(c.id)}">Excluir</button></div></div>`).join(''):'<div class="empty">Cadastre uma categoria para organizar as tarefas.</div>';
+ $('all-tasks').innerHTML=state.tasks.length?state.tasks.map(t=>taskHTML(t,'admin')).join(''):'<div class="empty">Nenhuma tarefa cadastrada.</div>';
+ const catSel=$('task-category'),oldCat=catSel.value;
+ catSel.innerHTML=state.categories.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+ if([...catSel.options].some(o=>o.value===oldCat))catSel.value=oldCat;
+ $('history-list').innerHTML=state.history.length?state.history.map(h=>`<div class="history-item"><div class="ico">${h.kind==='gain'?'🟢':h.kind==='loss'?'🔴':h.kind==='week'?'🗓️':'📝'}</div><div class="desc"><strong>${esc(h.title)}</strong><small>${fmtDate(h.date.slice(0,10))} · ${esc(h.note||'')}</small></div><div class="history-points" style="color:${h.points<0?'var(--red)':'var(--forest)'}">${h.points===null?'':signed(h.points)}</div></div>`).join(''):'<div class="empty">Os lançamentos aparecerão aqui.</div>';
+ $('reward-list').innerHTML=state.rewards.length?state.rewards.map(r=>`<div class="reward" style="margin-bottom:10px"><div class="chest">🎁</div><div class="reward-info"><strong>${esc(r.name)}</strong><span class="muted">${r.created?`Conquistado/adicionado em ${fmtDate(r.created.slice(0,10))}`:''}</span><div class="muted">${r.quantity} disponível(is)</div></div><button class="btn gold small" data-action="redeem-reward" data-id="${esc(r.id)}">Resgatar 1</button><button class="btn danger small" data-action="delete-reward" data-id="${esc(r.id)}">Excluir</button></div>`).join(''):'<div class="empty">Ainda não há prêmios acumulados. Ao fechar uma semana elegível, a hora de eletrônico será adicionada aqui.</div>';
+}
+$('task-filter').addEventListener('change',render);
+function confirmAction(title,message,action){pendingAction=action;$('dialog-title').textContent=title;$('dialog-message').textContent=message;$('confirm-dialog').showModal()}
+$('dialog-cancel').addEventListener('click',()=>{$('confirm-dialog').close();pendingAction=null});
+$('dialog-ok').addEventListener('click',()=>{const a=pendingAction;$('confirm-dialog').close();pendingAction=null;if(a)a()});
+$('close-week').addEventListener('click',()=>{
+ confirmAction('Encerrar a semana?',`Saldo final: ${state.balance} pontos. ${state.balance>=0?'A equipe ganhará 1 hora de eletrônico compartilhada.':'Como o saldo é negativo, não haverá recompensa.'} O saldo será zerado e uma nova semana começará.`,()=>{
+   const final=state.balance,eligible=final>=0;
+   if(eligible){const existing=state.rewards.find(r=>r.name==='1 hora de eletrônico compartilhada');if(existing)existing.quantity+=1;else state.rewards.unshift({id:uid(),name:'1 hora de eletrônico compartilhada',quantity:1,created:new Date().toISOString()})}
+   addHistory('week',`Semana encerrada · saldo final ${signed(final)} pontos`,null,eligible?'Recompensa adicionada: 1 hora de eletrônico compartilhada':'Saldo negativo: sem recompensa');
+   state.closedWeeks++;state.weekNumber++;state.balance=0;state.earned=0;state.lost=0;state.weekStart=weekStartISO(new Date());save();toast(eligible?'Semana encerrada! Prêmio acumulado.':'Semana encerrada. Novo ciclo iniciado.');
+ });
+});
+$('category-form').addEventListener('submit',e=>{
+ e.preventDefault();const id=$('category-id').value,name=$('category-name').value.trim(),type=$('category-color').value;
+ if(!name)return;
+ if(id){const c=cat(id);if(c){c.name=name;c.type=type}toast('Categoria atualizada.')}
+ else{state.categories.push({id:uid(),name,type});toast('Categoria criada.')}
+ resetCategoryForm();save();
+});
+function resetCategoryForm(){$('category-form').reset();$('category-id').value='';$('save-category').textContent='Salvar categoria';$('cancel-category').classList.add('hidden')}
+$('cancel-category').addEventListener('click',resetCategoryForm);
+$('task-form').addEventListener('submit',e=>{
+ e.preventDefault();const id=$('task-id').value,name=$('task-name').value.trim(),points=Number($('task-points').value),emoji=$('task-emoji').value.trim()||'⭐',categoryId=$('task-category').value,active=$('task-active').checked;
+ if(!name||!Number.isFinite(points)||!state.categories.some(c=>c.id===categoryId)){toast('Confira nome, pontos e categoria.');return}
+ if(id){const t=state.tasks.find(t=>t.id===id);if(t)Object.assign(t,{name,points,emoji,categoryId,active});toast('Tarefa atualizada.')}
+ else{state.tasks.push({id:uid(),name,points,emoji,categoryId,active});toast('Tarefa cadastrada.')}
+ resetTaskForm();save();
+});
+function resetTaskForm(){$('task-form').reset();$('task-id').value='';$('task-points').value=10;$('task-emoji').value='⭐';$('task-active').checked=true;$('save-task').textContent='Salvar tarefa';$('cancel-task').classList.add('hidden')}
+$('cancel-task').addEventListener('click',resetTaskForm);
+$('reward-form').addEventListener('submit',e=>{e.preventDefault();const name=$('reward-name').value.trim(),quantity=Math.floor(Number($('reward-quantity').value));if(!name||quantity<1)return;const r=state.rewards.find(r=>r.name.toLowerCase()===name.toLowerCase());if(r)r.quantity+=quantity;else state.rewards.unshift({id:uid(),name,quantity,created:new Date().toISOString()});$('reward-form').reset();$('reward-quantity').value=1;save();toast('Prêmio adicionado ao acumulado.')});
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-action]');if(!b)return;const {action,id}=b.dataset;
+ if(action==='launch'){logTask(state.tasks.find(t=>t.id===id));return}
+ if(action==='edit-task'){const t=state.tasks.find(t=>t.id===id);if(!t)return;$('task-id').value=t.id;$('task-name').value=t.name;$('task-points').value=t.points;$('task-emoji').value=t.emoji;$('task-category').value=t.categoryId;$('task-active').checked=t.active;$('save-task').textContent='Salvar alterações';$('cancel-task').classList.remove('hidden');showTab('tarefas');$('task-name').focus();return}
+ if(action==='toggle-task'){const t=state.tasks.find(t=>t.id===id);if(t){t.active=!t.active;save();toast(t.active?'Tarefa ativada.':'Tarefa desativada.')}return}
+ if(action==='delete-task'){const t=state.tasks.find(t=>t.id===id);if(!t)return;confirmAction('Excluir tarefa?',`Excluir "${t.name}"? O histórico antigo será mantido.`,()=>{state.tasks=state.tasks.filter(x=>x.id!==id);save();toast('Tarefa excluída.')});return}
+ if(action==='edit-category'){const c=cat(id);if(!c)return;$('category-id').value=c.id;$('category-name').value=c.name;$('category-color').value=c.type;$('save-category').textContent='Salvar alterações';$('cancel-category').classList.remove('hidden');showTab('tarefas');$('category-name').focus();return}
+ if(action==='delete-category'){const c=cat(id);if(!c)return;const used=state.tasks.some(t=>t.categoryId===id);if(used){toast('Mova ou exclua as tarefas desta categoria antes de excluí-la.');return}confirmAction('Excluir categoria?',`Excluir "${c.name}"?`,()=>{state.categories=state.categories.filter(x=>x.id!==id);save();toast('Categoria excluída.')});return}
+ if(action==='redeem-reward'){const r=state.rewards.find(r=>r.id===id);if(!r)return;confirmAction('Confirmar resgate?',`Marcar 1 unidade de "${r.name}" como resgatada?`,()=>{r.quantity--;if(r.quantity<=0)state.rewards=state.rewards.filter(x=>x.id!==id);addHistory('redeem',`Prêmio resgatado: ${r.name}`,null,'Resgate confirmado pelo adulto');save();toast('Resgate registrado.')});return}
+ if(action==='delete-reward'){const r=state.rewards.find(r=>r.id===id);if(!r)return;confirmAction('Excluir prêmio acumulado?',`Remover "${r.name}" do saldo de prêmios?`,()=>{state.rewards=state.rewards.filter(x=>x.id!==id);save();toast('Prêmio removido.')});return}
+});
+function exportBackup(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-missoes-familia.json';a.click();URL.revokeObjectURL(a.href);toast('Backup exportado.');}
+ $('export-data').addEventListener('click',exportBackup);
+ $('backup-now').addEventListener('click',exportBackup);
+$('import-button').addEventListener('click',()=>$('import-file').click());
+$('import-file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const obj=JSON.parse(await f.text());if(!Array.isArray(obj.tasks)||!Array.isArray(obj.categories)||!Array.isArray(obj.history)||!Array.isArray(obj.rewards))throw Error('Formato inválido');confirmAction('Importar backup?', 'Isso substituirá os dados atuais deste navegador.',()=>{state={...defaultState(),...obj};save();toast('Backup importado.')})}catch(err){toast('Não foi possível importar esse arquivo.')}e.target.value=''});
+try{const test='__coopmode_storage_test__';localStorage.setItem(test,'ok');if(localStorage.getItem(test)!=='ok')throw Error('Falha no teste');localStorage.removeItem(test)}catch(e){storageError='Armazenamento indisponível: '+e.message}
+ render();
+})();
+</script>
+</body>
+</html>
